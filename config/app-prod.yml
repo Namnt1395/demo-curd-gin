@@ -1,0 +1,59 @@
+server:
+  port: 8099
+
+database:
+  host: localhost
+  port: 3306
+  username: root
+  password:
+  dbname: demo
+  maxIdleConns: 10
+  maxOpenConns: 1000
+  connMaxLifetime: 1h
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
+  producer:
+    exchange: sam-svc-exc
+
+jwt:
+  realm: namnt.com
+  signAlg: HS512
+  secret: Secret@123456
+  expiredTime: 999999h
+  refreshExpTime: 999999h
+  longRefreshExpTime: 999999h
+
+resty:
+  debug: true
+  timeout: 1m
+
+i18n:
+  langs: vi,en
+
+cors:
+  allowOrigins: '*'
+  allowMethods: '*'
+  allowHeaders: Accept,Accept-Language,Origin,Content-Length,Content-Type,Authorization
+  exposeHeaders: Content-Length,Content-Type
+  allowCredentials: true
+  maxAge: 24h
+
+swagger:
+  url:
+
+hostUrl:
+  membership: 'http://localhost:8099'
+
+security:
+  authorizedRequests:
+    - urls: /api/v1/**:*
+      access: PermitAll
+    - urls: /api/internal/**:*
+      access: PermitAll
+
+log:
+  level: debug
