@@ -8,7 +8,6 @@ import (
 	"demo-curd/dao"
 	"demo-curd/database"
 	"demo-curd/i18n"
-	"demo-curd/rabbitmq"
 	"demo-curd/router"
 	"demo-curd/service"
 	"github.com/google/wire"
@@ -20,7 +19,6 @@ func InitApp() (App, error) {
 		config.LoadConfig,
 		database.NewDatabase,
 		i18n.NewI18n,
-		rabbitmq.NewRabbitMQ,
 		router.NewRouterWithoutAuthMw,
 		// dao
 		wire.Struct(new(dao.CurdDao), "*"),
@@ -28,7 +26,7 @@ func InitApp() (App, error) {
 		wire.Struct(new(service.CurdService), "*"),
 		// api
 		wire.Struct(new(v1.CurdV1Api), "*"),
-	// app
-	wire.Struct(new(App), "*")))
+		// app
+		wire.Struct(new(App), "*")))
 	return App{}, nil
 }

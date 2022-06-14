@@ -2,27 +2,19 @@ server:
   port: 8099
 
 database:
-  host: localhost
+  host: 127.0.0.1
   port: 3306
   username: root
-  password: 1234
-  dbname: demo
+  password: ''
+  dbname: go_gin
   maxIdleConns: 10
   maxOpenConns: 1000
   connMaxLifetime: 1h
 
-rabbitmq:
-  host: localhost
-  port: 5672
-  username: guest
-  password: guest
-  producer:
-    exchange: sam-svc-exc
-
 jwt:
   realm: namnt.com
   signAlg: HS512
-  secret: Secret@123456
+  secret: namnt@demo
   expiredTime: 999999h
   refreshExpTime: 999999h
   longRefreshExpTime: 999999h
@@ -44,9 +36,6 @@ cors:
 
 swagger:
   url:
-
-hostUrl:
-  membership: 'http://localhost:8099'
 
 security:
   authorizedRequests:

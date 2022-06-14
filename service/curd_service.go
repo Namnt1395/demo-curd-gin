@@ -10,13 +10,13 @@ import (
 )
 
 type CurdService struct {
-	curdDao dao.CurdDao
+	CurdDao *dao.CurdDao
 }
 
-func (s CurdService) Create(dto *request.CurdDTO) (*response.CurdDTO, error) {
+func (s *CurdService) Create(dto *request.CurdDTO) (*response.CurdDTO, error) {
 	var curd model.Curd
 	util.Must(copier.Copy(&curd, &dto))
-	_, err1 := s.curdDao.Create(&curd)
+	_, err1 := s.CurdDao.Create(&curd)
 	util.Must(err1)
 	var res response.CurdDTO
 	util.Must(copier.Copy(&res, &curd))

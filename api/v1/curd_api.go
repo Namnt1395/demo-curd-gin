@@ -17,13 +17,13 @@ type CurdV1Api struct {
 // @Summary Create new curd
 // @Description Create new curd
 // @Tags CURD
-// @Security ApiKeyAuth
 // @Accept json
-// @Param body body request.curdDTO true "JSON body"
-// @Success 200 {object} response.curdDTO
+// @Security ApiKeyAuth
+// @Param body body request.CurdDTO true "JSON body"
+// @Success 200 {object} response.CurdDTO
 // @Failure 500 {object} interface{} "{"error_code": "<Mã lỗi>", "error_msg": "<Nội dung lỗi>"}"
 // @Router /api/v1/curd [post]
-func (r CurdV1Api) Create(c *gin.Context) {
+func (r *CurdV1Api) Create(c *gin.Context) {
 	var curdDTO request.CurdDTO
 	util.Must(c.BindJSON(&curdDTO))
 	res, err := r.CurdService.Create(&curdDTO)

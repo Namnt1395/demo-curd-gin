@@ -11,7 +11,6 @@ import (
 	"demo-curd/dao"
 	"demo-curd/database"
 	"demo-curd/i18n"
-	"demo-curd/rabbitmq"
 	"demo-curd/router"
 	"demo-curd/service"
 )
@@ -35,15 +34,11 @@ func InitApp() (App, error) {
 	if err != nil {
 		return App{}, err
 	}
-	rabbitMQ, err := rabbitmq.NewRabbitMQ(configConfig)
-	if err != nil {
-		return App{}, err
-	}
-	curdDao := dao.CurdDao{
+	curdDao := &dao.CurdDao{
 		Db: databaseDatabase,
 	}
 	curdService := &service.CurdService{
-		curdDao: curdDao,
+		CurdDao: curdDao,
 	}
 	curdV1Api := &v1.CurdV1Api{
 		CurdService: curdService,
@@ -52,7 +47,6 @@ func InitApp() (App, error) {
 		Config:    configConfig,
 		Database:  databaseDatabase,
 		Router:    routerRouter,
-		RabbitMQ:  rabbitMQ,
 		I18n:      i18nI18n,
 		CurdV1Api: curdV1Api,
 	}

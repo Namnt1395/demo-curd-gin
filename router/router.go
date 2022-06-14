@@ -10,7 +10,6 @@ import (
 	"fmt"
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/bmatcuk/doublestar/v3"
-	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
@@ -23,26 +22,16 @@ import (
 )
 
 const (
-	reset                  = "\033[0m"
-	JWT_IDENTITY_KEY       = "id"
-	JWT_USER_ID            = "user_id"
-	JWT_COMPANY_ID         = "company_id"
-	JWT_COMPANY_CODE       = "company_code"
-	JWT_BRANCH_ID          = "branch_id"
-	JWT_BRANCH_CODE        = "branch_code"
-	JWT_BIZ_APP_SHORT_CODE = "biz_app_short_code"
-	JWT_BIZAPP_ALIAS       = "bizapp_alias"
-	JWT_BIZAPP_ID          = "bizapp_id"
-	JWT_ENVIRONMENT        = "env"
-	JWT_AUTHORITIES        = "authorities"
-	JWT_CORE_AUTHORITIES   = "core_authorities"
+	reset            = "\033[0m"
+	JWT_IDENTITY_KEY = "id"
+	JWT_USER_ID      = "user_id"
+	JWT_AUTHORITIES  = "authorities"
 )
 
 type Router struct {
 	Engine                   *gin.Engine
 	AuthMiddleware           *jwt.GinJWTMiddleware
 	I18n                     *i18n.I18n
-	DfRedisStore             *persistence.RedisStore
 	PrivateKey               *rsa.PrivateKey
 	LongRefreshExpTime       time.Duration
 	CustomAuthorizedHandlers []CustomAuthorizedHandler
@@ -97,7 +86,6 @@ func NewRouter(c config.Config, i18n *i18n.I18n, jwtMdw jwt.GinJWTMiddleware) (*
 		Engine:                   e,
 		AuthMiddleware:           authMiddleware,
 		I18n:                     i18n,
-		DfRedisStore:             persistence.NewRedisCache("localhost:6379", "", time.Hour*2), // cache middleware
 		LongRefreshExpTime:       refreshExpTime,
 		PrivateKey:               privateKey(authMiddleware),
 		CustomAuthorizedHandlers: make([]CustomAuthorizedHandler, 0),
@@ -256,53 +244,6 @@ func authorizePerUrl(data interface{}, c *gin.Context, url string, req config.Co
 	return false, false
 }
 
-func authorizeRequest(data interface{}, c *gin.Context, req config.ConfigAuthorizedRequests, authorities []interface{}, handlers []CustomAuthorizedHandler) bool {
-	for _, url := range req.Urls {
-		arrUrl := strings.Split(url, ":")
-		pathMatched, err := doublestar.Match(arrUrl[0], c.FullPath())
-		util.Must(err)
-		if len(arrUrl) > 1 && pathMatched {
-			methods := strings.Split(arrUrl[1], ",")
-			if len(methods) <= 0 {
-				return false
-			}
-			methodPatched := true
-			for _, med := range methods {
-				mm, err := doublestar.Match(med, c.Request.Method)
-				util.Must(err)
-				methodPatched = methodPatched && mm
-				if !methodPatched {
-					return false
-				}
-			}
-			if req.Access == constant.AccessHasPermission {
-				if auth := authorizeHasPermission(req, authorities); auth {
-					return true
-				}
-			} else if req.Access == constant.AccessHasRole {
-				if auth := authorizeHasRole(req, authorities); auth {
-					return true
-				}
-			} else if req.Access == constant.AccessPermitAll {
-				return true
-			} else if req.Access == constant.AccessDenyAll {
-				return false
-			} else if req.Access == constant.AccessCustom {
-				if handlers != nil && len(handlers) > 0 {
-					for _, h := range handlers {
-						if auth := h.Authorize(c, data, authorities); auth {
-							return true
-						}
-					}
-				}
-			} else {
-				panic(errors.New("Invalid access type, must be has permission, has role, permit all or deny all"))
-			}
-		}
-	}
-	return false
-}
-
 func authorizeHasPermission(req config.ConfigAuthorizedRequests, authorities []interface{}) bool {
 	for _, p := range req.Permissions {
 		_, find := util.FindStringInGeneric(authorities, p)
@@ -330,52 +271,4 @@ func (r *Router) RegisterCustomAuthorizedHandler(cah CustomAuthorizedHandler) {
 func (r *Router) InitSwagger(c config.Config) {
 	url := ginSwagger.URL(fmt.Sprintf("%v/swagger/doc.json", c.Swagger.Url))
 	r.Engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
-}
-
-func ExtractUserIdAndCompId(c *gin.Context) (uint64, uint64) {
-	claims := jwt.ExtractClaims(c)
-	return uint64(claims[JWT_USER_ID].(float64)), uint64(claims[JWT_COMPANY_ID].(float64))
-}
-
-func ExtractTokenParams(c *gin.Context) (uint64, uint64, string) {
-	claims := jwt.ExtractClaims(c)
-	return uint64(claims[JWT_USER_ID].(float64)), uint64(claims[JWT_COMPANY_ID].(float64)), claims[JWT_COMPANY_CODE].(string)
-}
-
-func ExtractTokenParamsV2(c *gin.Context) (uint64, uint64, string, *string) {
-	claims := jwt.ExtractClaims(c)
-	mCode, ok := claims[JWT_BIZ_APP_SHORT_CODE]
-	if !ok {
-		return uint64(claims[JWT_USER_ID].(float64)), uint64(claims[JWT_COMPANY_ID].(float64)), claims[JWT_COMPANY_CODE].(string), nil
-	}
-	mCode2, ok := mCode.(string)
-	if !ok {
-		return uint64(claims[JWT_USER_ID].(float64)), uint64(claims[JWT_COMPANY_ID].(float64)), claims[JWT_COMPANY_CODE].(string), nil
-	}
-	return uint64(claims[JWT_USER_ID].(float64)), uint64(claims[JWT_COMPANY_ID].(float64)), claims[JWT_COMPANY_CODE].(string), &mCode2
-}
-
-func ExtractCompanyCode(c *gin.Context) string {
-	claims := jwt.ExtractClaims(c)
-	return claims[JWT_COMPANY_CODE].(string)
-}
-
-func ExtractUserID(c *gin.Context) uint64 {
-	claims := jwt.ExtractClaims(c)
-	return uint64(claims[JWT_USER_ID].(float64))
-}
-
-func ExtractCompanyID(c *gin.Context) uint64 {
-	claims := jwt.ExtractClaims(c)
-	return uint64(claims[JWT_COMPANY_ID].(float64))
-}
-
-func ExtractBranchID(c *gin.Context) uint64 {
-	claims := jwt.ExtractClaims(c)
-	return uint64(claims[JWT_BRANCH_ID].(float64))
-}
-
-func ExtractBranchCode(c *gin.Context) string {
-	claims := jwt.ExtractClaims(c)
-	return claims[JWT_BRANCH_CODE].(string)
 }

@@ -5,14 +5,13 @@ import (
 	v1 "demo-curd/api/v1"
 	"demo-curd/config"
 	"demo-curd/database"
+	"demo-curd/docs"
 	"demo-curd/i18n"
 	"demo-curd/model"
-	"demo-curd/rabbitmq"
 	"demo-curd/router"
 	"demo-curd/util"
 	"fmt"
 	"github.com/rs/zerolog/log"
-	"github.com/swaggo/swag/example/basic/docs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,7 +23,6 @@ type App struct {
 	Config    config.Config
 	Database  *database.Database
 	Router    *router.Router
-	RabbitMQ  *rabbitmq.RabbitMQ
 	I18n      *i18n.I18n
 	CurdV1Api *v1.CurdV1Api
 }
@@ -51,18 +49,16 @@ func (r App) Stop() {
 	if err := r.Database.Close(); err != nil {
 		panic(err)
 	}
-	if err := r.RabbitMQ.Close(); err != nil {
-		panic(err)
-	}
 }
 
 func (r App) SetupRouters() {
 	// test group
 	// public api v1
-	//groupPublicV1 := r.Router.Engine.Group("/api/public/v1")
-	//{
-	//
-	//}
+	groupPublicV1 := r.Router.Engine.Group("/api/public/v1")
+	{
+		// foo API
+		groupPublicV1.POST("c", r.CurdV1Api.Create)
+	}
 	// authorized api v1
 	groupV1 := r.Router.Engine.Group("/api/v1")
 	groupV1.Use(r.Router.AuthMiddleware.MiddlewareFunc())
@@ -77,14 +73,15 @@ func (r App) SetupRouters() {
 
 func (r App) InitSwagger(c config.Config) {
 	docs.SwaggerInfo.Host = c.Swagger.Url
+	fmt.Println("docs.SwaggerInfo.Host....", docs.SwaggerInfo.Host)
 	r.Router.InitSwagger(c)
 }
 
-// @title Sample Service API
+// @title Sample Service CURD API
 // @version 1.0
-// @description This is Sample Service API.
+// @description This is Sample Service CURD API
 
-// @contact.name Namnt
+// @contact.name namnt
 // @contact.email namnguyenthanh024@gmail.com
 
 // @host localhost:8099
