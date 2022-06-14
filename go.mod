@@ -8,6 +8,7 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/logger v0.2.2
 	github.com/gin-gonic/gin v1.8.1
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/google/wire v0.5.0
 	github.com/jinzhu/copier v0.2.5
